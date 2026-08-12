@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>4B PAVEMENT TILES — অনলাইনে অর্ডার করুন</title>
+<meta name="description" content="4B Pavement Tiles — সরাসরি ফ্যাক্টরি থেকে পেভমেন্ট টাইলস অর্ডার করুন। লগইন ছাড়াই, দ্রুত ও সহজে।">
+<meta name="theme-color" content="#F3EEE4">
+<meta property="og:type" content="website">
+<meta property="og:title" content="4B PAVEMENT TILES — অনলাইনে অর্ডার করুন">
+<meta property="og:description" content="সরাসরি ফ্যাক্টরি থেকে পেভমেন্ট টাইলস অর্ডার করুন। লগইন ছাড়াই, দ্রুত ও সহজে।">
+<meta property="og:image" content="icons/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="4B PAVEMENT TILES — অনলাইনে অর্ডার করুন">
+<meta name="twitter:description" content="সরাসরি ফ্যাক্টরি থেকে পেভমেন্ট টাইলস অর্ডার করুন।">
+<meta name="twitter:image" content="icons/icon-512.png">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <div class="dash-bg"><div class="dash-lattice"></div><div class="dash-aurora dash-a1"></div><div class="dash-aurora dash-a2"></div><div class="dash-aurora dash-a3"></div></div>
+  <div class="splash-float sf1"></div><div class="splash-float sf2"></div><div class="splash-float sf3"></div><div class="splash-float sf4"></div>
+  <div class="splash-logo-wrap">
+    <span class="splash-ring-2"></span><span class="splash-ring-1"></span>
+    <div class="brand-mark" id="splashMark"></div>
+  </div>
+  <h1 class="splash-title">4B PAVEMENT TILES</h1>
+  <div class="splash-tagline" id="splashTagline"></div>
+  <div class="splash-bar"><span></span></div>
+</div>
+
+<div class="shop-page" id="shopPage" style="display:none;">
+
+  <header class="shop-hdr">
+    <div class="shop-brand">
+      <div class="brand-mark sm" id="shopMark"></div>
+      <div class="shop-brand-text">
+        <b id="shopName">4B PAVEMENT TILES</b>
+        <small id="shopSub">পেভমেন্ট টাইলস প্রস্তুতকারক</small>
+      </div>
+    </div>
+    <a class="shop-login-btn" href="login.html">লগইন</a>
+  </header>
+
+  <div class="shop-hero">
+    <div class="sh-badge"><span class="dash-radar"><i></i><b></b></span> সরাসরি ফ্যাক্টরি থেকে</div>
+    <h1>অনলাইনে অর্ডার করুন</h1>
+    <p>পছন্দের টাইলস বেছে অর্ডার পাঠান — আমরা ফোনে যোগাযোগ করে দাম ও ডেলিভারি চূড়ান্ত করব।</p>
+    <button class="track-link-btn" id="trackOpenBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg> আপনার অর্ডার ট্র্যাক করুন</button>
+  </div>
+
+  <div class="banner-wrap" id="bannerWrap" style="display:none;">
+    <div class="banner-track" id="bannerTrack"></div>
+    <div class="banner-dots" id="bannerDots"></div>
+  </div>
+
+  <div class="shop-search-wrap">
+    <div class="shop-search">
+      <span class="ss-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+      <input id="searchInput" placeholder="টাইলস খুঁজুন...">
+      <span class="ss-clear" id="searchClear" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></span>
+    </div>
+    <button class="wish-filter-chip" id="wishFilterChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6z"/></svg></button>
+  </div>
+
+  <div class="shop-section-lbl">আমাদের টাইলস</div>
+  <div class="shop-grid" id="productGrid">
+    <div class="muted center" style="grid-column:1/3; padding:30px 0;"></div>
+  </div>
+
+  <div class="shop-contact" id="shopContact" style="display:none;"></div>
+
+  <footer class="dev-credit">
+    <span class="dc-mark"></span>
+    <span class="dc-label">Developed By</span>
+    <span class="dc-name">Meraz Bin Mizanur</span>
+  </footer>
+
+</div>
+
+<a class="wa-fab" id="waFab" style="display:none;" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.2 0-.4 0-.5C10 9 9.4 7.6 9.1 7c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.1 0 1.2.9 2.4 1 2.6.1.2 1.8 2.8 4.4 3.9.6.3 1.1.4 1.5.5.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.2-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.5A10 10 0 1 0 12 2z"/></svg>
+</a>
+
+<div class="cart-bar" id="cartBar" style="display:none;">
+  <div class="cb-info"><b id="cartCount">০ টি পণ্য</b><small>কার্টে যোগ হয়েছে</small></div>
+  <button class="btn btn-primary btn-auto" id="cartOpenBtn">কার্ট দেখুন</button>
+</div>
+
+<script type="module" src="js/shop.js"></script>
+</body>
+</html>

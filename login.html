@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>লগইন — 4B PAVEMENT TILES</title>
+<meta name="description" content="4B Pavement Tiles — বিক্রি, উৎপাদন ও স্টক ম্যানেজমেন্ট">
+<meta name="theme-color" content="#F3EEE4">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <div class="dash-bg"><div class="dash-lattice"></div><div class="dash-aurora dash-a1"></div><div class="dash-aurora dash-a2"></div><div class="dash-aurora dash-a3"></div></div>
+  <div class="splash-float sf1"></div><div class="splash-float sf2"></div><div class="splash-float sf3"></div><div class="splash-float sf4"></div>
+  <div class="splash-logo-wrap">
+    <span class="splash-ring-2"></span><span class="splash-ring-1"></span>
+    <div class="brand-mark" id="splashMark"></div>
+  </div>
+  <h1 class="splash-title">4B PAVEMENT TILES</h1>
+  <div class="splash-tagline" id="splashTagline"></div>
+  <div class="splash-bar"><span></span></div>
+</div>
+
+<div class="login-wrap" id="loginWrap" style="display:none;">
+  <div class="dash-bg"><div class="dash-lattice"></div><div class="dash-aurora dash-a1"></div><div class="dash-aurora dash-a2"></div><div class="dash-aurora dash-a3"></div></div>
+  <a class="back-to-shop" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg> দোকানে ফিরে যান</a>
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark" id="brandMarkHolder"></div>
+      <h1>4B PAVEMENT TILES</h1>
+      <p>বিক্রি, উৎপাদন ও স্টক ব্যবস্থাপনা</p>
+    </div>
+
+    <div class="error-box" id="errBox"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label>ইমেইল</label>
+        <input type="email" id="email" placeholder="you@example.com" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>পাসওয়ার্ড</label>
+        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary" id="loginBtn" style="margin-top:6px; width:100%;">
+        <span id="loginBtnText">লগইন করুন</span>
+      </button>
+    </form>
+  </div>
+
+  <p class="muted center" style="margin-top:22px;">অ্যাকাউন্ট না থাকলে মালিকের সাথে যোগাযোগ করুন</p>
+
+  <footer class="dev-credit">
+    <span class="dc-mark"></span>
+    <span class="dc-label">Developed By</span>
+    <span class="dc-name">Meraz Bin Mizanur</span>
+  </footer>
+</div>
+
+<script type="module">
+  import { Icon } from "./js/icons.js";
+  import { login, authErrorText, getProfile, hasPinFor, setPinFor } from "./js/auth.js";
+  import { auth } from "./js/firebase-config.js";
+  import { withTimeout, initUpdateWatcher } from "./js/utils.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+  document.getElementById("brandMarkHolder").innerHTML = Icon.brand;
+  document.getElementById("splashMark").innerHTML = Icon.brand;
+
+  const SPLASH_TAGLINES = ["বিশ্বস্ততার ৯+ বছর", "সারাদেশে বিশ্বস্ত ডেলিভারি", "সর্বোচ্চ মানের পেভমেন্ট টাইলস", "বরিশাল থেকে সারাদেশে"];
+  (function startSplashTagline() {
+    const el = document.getElementById("splashTagline");
+    if (!el) return;
+    let i = 0;
+    const show = () => { el.textContent = SPLASH_TAGLINES[i]; el.classList.add("show"); };
+    show();
+    const timer = setInterval(() => {
+      if (!document.body.contains(el)) { clearInterval(timer); return; }
+      el.classList.remove("show");
+      setTimeout(() => { i = (i + 1) % SPLASH_TAGLINES.length; show(); }, 300);
+    }, 2600);
+  })();
+
+  const splash = document.getElementById("splash");
+  const loginWrap = document.getElementById("loginWrap");
+  const errBox = document.getElementById("errBox");
+  const form = document.getElementById("loginForm");
+  const btn = document.getElementById("loginBtn");
+  const btnText = document.getElementById("loginBtnText");
+
+  let settled = false;
+  function reveal() {
+    if (settled) return;
+    settled = true;
+    splash.style.opacity = "0";
+    splash.style.transition = "opacity .3s ease";
+    setTimeout(() => { splash.remove(); loginWrap.style.display = "flex"; }, 300);
+  }
+
+  // If already signed in, silently route to the right panel.
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { reveal(); return; }
+    try {
+      const profile = await getProfile(user.uid);
+      if (profile && profile.role === "owner") { window.location.href = "owner.html"; return; }
+      if (profile && profile.role === "manager") { window.location.href = "manager.html"; return; }
+      reveal();
+    } catch { reveal(); }
+  });
+
+  // safety timeout in case auth check hangs (e.g. offline first load)
+  setTimeout(reveal, 2200);
+
+  if ("serviceWorker" in navigator) {
+    initUpdateWatcher();
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errBox.classList.remove("show");
+    btn.disabled = true;
+    btn.classList.add("is-loading");
+    btnText.innerHTML = `<span class="spinner"></span>`;
+    try {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const cred = await withTimeout(login(email, password), 12000);
+      const profile = await withTimeout(getProfile(cred.user.uid), 12000);
+      if (!profile || !profile.role) {
+        throw { code: "no-role" };
+      }
+      btnText.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M20 6L9 17l-5-5"/></svg>`;
+      const dest = profile.role === "owner" ? "owner.html" : "manager.html";
+      setTimeout(() => {
+        if (hasPinFor(email)) { window.location.href = dest; }
+        else { showPinSetupPrompt(email, dest); }
+      }, 350);
+    } catch (err) {
+      errBox.textContent = err.code === "no-role" ? "এই অ্যাকাউন্টের জন্য কোনো ভূমিকা (role) সেট করা নেই" : authErrorText(err);
+      errBox.classList.add("show");
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
+      btnText.textContent = "লগইন করুন";
+    }
+  });
+
+  // ---- post-login PIN setup (offered once, skipped if a PIN already exists
+  // for this email on this device) ----
+  function showPinSetupPrompt(email, dest) {
+    const card = document.querySelector(".login-card");
+    card.innerHTML = `
+      <div class="pinsetup-icon">${Icon.brand}</div>
+      <h1 style="text-align:center;">দ্রুত প্রবেশের জন্য PIN সেট করুন</h1>
+      <p class="muted center" style="margin:10px 0 20px; line-height:1.6;">পরের বার থেকে শুধু এই ৪-সংখ্যার PIN দিয়েই এই ফোনে দ্রুত ঢুকতে পারবেন — ইমেইল-পাসওয়ার্ড আবার লাগবে না।</p>
+      <button class="btn btn-primary" id="pinSetupYesBtn" style="width:100%; margin-bottom:10px;">PIN সেট করুন</button>
+      <button class="btn btn-ghost" id="pinSetupSkipBtn" style="width:100%;">এখন না</button>`;
+    document.getElementById("pinSetupSkipBtn").addEventListener("click", () => { window.location.href = dest; });
+    document.getElementById("pinSetupYesBtn").addEventListener("click", () => showPinEntryFlow(email, dest, card));
+  }
+  function showPinEntryFlow(email, dest, card) {
+    let stage = "enter";
+    let firstPin = "";
+    let buf = "";
+    function render(title) {
+      card.innerHTML = `
+        <div class="pinlock" style="padding:0;">
+          <h3>${title}</h3>
+          <div class="pin-dots" id="suDots"><span></span><span></span><span></span><span></span></div>
+          <div class="pin-error" id="suError" style="visibility:hidden;">PIN দুটো মেলেনি, আবার চেষ্টা করুন</div>
+          <div class="pin-pad" id="suPad">
+            <button type="button" data-num="1">1</button><button type="button" data-num="2">2</button><button type="button" data-num="3">3</button>
+            <button type="button" data-num="4">4</button><button type="button" data-num="5">5</button><button type="button" data-num="6">6</button>
+            <button type="button" data-num="7">7</button><button type="button" data-num="8">8</button><button type="button" data-num="9">9</button>
+            <span></span><button type="button" data-num="0">0</button><button type="button" data-action="back">⌫</button>
+          </div>
+        </div>`;
+      wire();
+    }
+    function wire() {
+      const dotsEl = document.getElementById("suDots");
+      const errEl = document.getElementById("suError");
+      const updateDots = () => dotsEl.querySelectorAll("span").forEach((d, i) => d.classList.toggle("filled", i < buf.length));
+      document.getElementById("suPad").addEventListener("click", async (e) => {
+        const b = e.target.closest("[data-num], [data-action]");
+        if (!b) return;
+        if (b.dataset.action === "back") { buf = buf.slice(0, -1); updateDots(); return; }
+        if (buf.length >= 4) return;
+        buf += b.dataset.num;
+        updateDots();
+        if (buf.length === 4) {
+          if (stage === "enter") {
+            firstPin = buf; buf = ""; stage = "confirm";
+            setTimeout(() => render("আবার PIN দিন"), 200);
+          } else if (buf === firstPin) {
+            await setPinFor(email, buf);
+            window.location.href = dest;
+          } else {
+            errEl.style.visibility = "visible";
+            setTimeout(() => { buf = ""; firstPin = ""; stage = "enter"; render("PIN দিন"); }, 700);
+          }
+        }
+      });
+    }
+    render("PIN দিন");
+  }
+</script>
+</body>
+</html>
