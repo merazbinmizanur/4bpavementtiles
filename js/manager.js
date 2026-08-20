@@ -16,7 +16,7 @@ import {
 } from "./data.js";
 import {
   formatMoney, formatQty, formatDateBN, formatDateTimeBN, formatWeekdayBN, toDate, ymd, ym,
-  showToast, confirmDialog, formSheet, sheet, escapeHtml, alertDialog, shortfallBodyHtml, initUpdateWatcher, initA2HSPrompt
+  showToast, confirmDialog, formSheet, sheet, escapeHtml, alertDialog, shortfallBodyHtml, initUpdateWatcher, initA2HSPrompt, initThemeToggle, initGuidedTour
 } from "./utils.js";
 
 const S = {
@@ -106,12 +106,22 @@ guardPage("manager", (profile) => {
   viewEl.addEventListener("click", onViewClick);
   initSubscriptions();
   navTo("dashboard");
+  setTimeout(() => {
+    initGuidedTour([
+      { selector: ".mgr-tasks", title: "আজকের কাজ", desc: "প্রতিদিন কী কী করতে হবে তার একটা তালিকা — এখান থেকেই সরাসরি চলে যেতে পারবেন।" },
+      { selector: ".mgr-actions", title: "কাজ শুরু করুন", desc: "বিক্রি, উৎপাদন, স্টক — সবকিছু এখান থেকে এক ট্যাপে শুরু করতে পারবেন।" },
+      { selector: "#bottomNav", title: "নিচের নেভিগেশন", desc: "এখান থেকে বিক্রি, উৎপাদন, স্টক আর হাজিরায় দ্রুত যাওয়া যাবে।" },
+      { selector: "#feedbackBtn", title: "ফিডব্যাক পাঠান", desc: "মালিককে সরাসরি কোনো বার্তা বা সমস্যার কথা জানাতে চাইলে এখান থেকে পাঠাতে পারবেন।" },
+      { selector: "#themeToggleBtn", title: "থিম বদলান", desc: "চাইলে যেকোনো সময় হালকা বা গাঢ় থিমে বদলে নিতে পারবেন।" }
+    ], `4b_tour_seen_${profile.id || "manager"}`);
+  }, 900);
 });
 
 if ("serviceWorker" in navigator) {
   initUpdateWatcher();
 }
 initA2HSPrompt();
+initThemeToggle("themeToggleBtn");
 
 function initSubscriptions() {
   subscribeTileTypes(v => { S.tileTypes = v; scheduleRender("tileTypes"); });

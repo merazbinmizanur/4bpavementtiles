@@ -24,7 +24,7 @@ import {
 } from "./data.js";
 import {
   formatMoney, formatQty, formatDateBN, formatDateTimeBN, formatWeekdayBN, toDate, ymd, ym, toBnDigits,
-  showToast, confirmDialog, formSheet, sheet, escapeHtml, alertDialog, shortfallBodyHtml, initUpdateWatcher, initA2HSPrompt
+  showToast, confirmDialog, formSheet, sheet, escapeHtml, alertDialog, shortfallBodyHtml, initUpdateWatcher, initA2HSPrompt, initThemeToggle
 } from "./utils.js";
 
 /* ================= state ================= */
@@ -133,6 +133,7 @@ if ("serviceWorker" in navigator) {
   initUpdateWatcher();
 }
 initA2HSPrompt();
+initThemeToggle("themeToggleBtn");
 
 function initSubscriptions() {
   subscribeTileTypes(v => { S.tileTypes = v; onStateChange("tileTypes"); });
@@ -687,16 +688,19 @@ function renderDashboard() {
     </div>
 
     <div class="dash-section-lbl dash-rise" style="animation-delay:.4s">দ্রুত অ্যাক্সেস</div>
-    <div class="dash-navlist dash-rise" style="animation-delay:.42s">
-      <div class="dash-navrow" data-action="nav:saleEntry"><div class="ic" style="background:var(--terracotta);">${Icon.plus}</div><div class="body"><b>নতুন বিক্রি এন্ট্রি</b><small>নিজে বিক্রি করুন</small></div><div class="chev">›</div></div>
-      <div class="dash-navrow" data-action="nav:sales"><div class="ic" style="background:var(--terracotta);">${Icon.sale}</div><div class="body"><b>বিক্রি তালিকা</b><small>${formatQty(S.sales.length)} এন্ট্রি</small></div><div class="chev">›</div></div>
-      <div class="dash-navrow" data-action="nav:orders"><div class="ic" style="background:var(--ink);">${Icon.clipboard}</div><div class="body"><b>অর্ডার</b><small>${formatQty(S.orders.filter(o => o.status !== "delivered" && o.status !== "cancelled").length)} সক্রিয়</small></div><div class="chev">›</div></div>
-      <div class="dash-navrow" data-action="nav:onlineOrders"><div class="ic" style="background:var(--moss-deep);">${Icon.truck}</div><div class="body"><b>অনলাইন অর্ডার</b><small>${(() => { const n = S.onlineOrders.filter(o => o.status === "new").length; return n ? `${formatQty(n)} টি নতুন` : "কোনো নতুন নেই"; })()}</small></div>${S.onlineOrders.filter(o => o.status === "new").length ? `<span class="oo-new-dot"></span>` : ""}<div class="chev">›</div></div>
-      <div class="dash-navrow" data-action="nav:production"><div class="ic" style="background:var(--ochre);">${Icon.factory}</div><div class="body"><b>উৎপাদন তালিকা</b><small>${formatQty(S.production.length)} এন্ট্রি</small></div><div class="chev">›</div></div>
-      <div class="dash-navrow" data-action="nav:stock"><div class="ic" style="background:var(--moss);">${Icon.box}</div><div class="body"><b>স্টক</b><small>বর্তমান স্টক দেখুন</small></div><div class="chev">›</div></div>
-      <div class="dash-navrow" data-action="nav:customers"><div class="ic" style="background:var(--terracotta-deep);">${Icon.people}</div><div class="body"><b>কাস্টমার খাতা</b><small>${formatQty(S.customers.filter(c => c.totalDue > 0).length)} জন বাকিতে</small></div><div class="chev">›</div></div>
-      <div class="dash-navrow" data-action="nav:attendance"><div class="ic" style="background:var(--ink);">${Icon.calendarCheck}</div><div class="body"><b>হাজিরা</b><small>${formatQty(presentToday)}/${formatQty(totalEmployees)} উপস্থিত</small></div><div class="chev">›</div></div>
-      <div class="dash-navrow" data-action="nav:feedback"><div class="ic" style="background:var(--terracotta-deep);">${Icon.message}</div><div class="body"><b>ফিডব্যাক</b><small>${unreadFeedback ? `${formatQty(unreadFeedback)} টি নতুন` : "সব পড়া হয়েছে"}</small></div><div class="chev">›</div></div>
+    <div class="qa-grid dash-rise" style="animation-delay:.42s">
+      <div class="qa-tile c1" data-action="nav:saleEntry"><span class="qa-icon">${Icon.plus}</span><b>নতুন বিক্রি</b><small>এন্ট্রি করুন</small></div>
+      <div class="qa-tile c2" data-action="nav:sales"><span class="qa-icon">${Icon.sale}</span><b>বিক্রি তালিকা</b><small>${formatQty(S.sales.length)} এন্ট্রি</small></div>
+      <div class="qa-tile c3" data-action="nav:orders"><span class="qa-icon">${Icon.clipboard}</span><b>অর্ডার</b><small>${formatQty(S.orders.filter(o => o.status !== "delivered" && o.status !== "cancelled").length)} সক্রিয়</small></div>
+      <div class="qa-tile c4" data-action="nav:onlineOrders"><span class="qa-icon">${Icon.truck}</span><b>অনলাইন অর্ডার</b><small>${(() => { const n = S.onlineOrders.filter(o => o.status === "new").length; return n ? `${formatQty(n)} নতুন` : "নতুন নেই"; })()}</small></div>
+      <div class="qa-tile c1" data-action="nav:production"><span class="qa-icon">${Icon.factory}</span><b>উৎপাদন</b><small>${formatQty(S.production.length)} এন্ট্রি</small></div>
+      <div class="qa-tile c2" data-action="nav:stock"><span class="qa-icon">${Icon.box}</span><b>স্টক</b><small>বর্তমান হিসাব</small></div>
+      <div class="qa-tile c3" data-action="nav:customers"><span class="qa-icon">${Icon.people}</span><b>কাস্টমার খাতা</b><small>${formatQty(S.customers.filter(c => c.totalDue > 0).length)} জন বাকি</small></div>
+      <div class="qa-tile c4" data-action="nav:attendance"><span class="qa-icon">${Icon.calendarCheck}</span><b>হাজিরা</b><small>${formatQty(presentToday)}/${formatQty(totalEmployees)}</small></div>
+      <div class="qa-tile c1" data-action="nav:feedback"><span class="qa-icon">${Icon.message}</span><b>ফিডব্যাক</b><small>${unreadFeedback ? `${formatQty(unreadFeedback)} নতুন` : "সব পড়া"}</small></div>
+    </div>
+    <div class="qa-hero-wrap dash-rise" style="animation-delay:.46s">
+      <div class="qa-hero" data-action="quick-add-tile"><span class="qa-hero-icon">${Icon.plus}</span><span class="qa-hero-text"><b>টাইলস যুক্ত করুন</b><small>নতুন ডিজাইন ও রঙ</small></span></div>
     </div>
 
     <div class="section-title"><h2>সাম্প্রতিক বিক্রি</h2><span class="link" data-action="nav:sales">সব দেখুন</span></div>
@@ -1280,6 +1284,12 @@ function renderShopManage() {
       <button class="btn btn-dark btn-sm" data-action="open-banner-manage">${Icon.plus} ব্যানার নির্বাচন করুন</button>
     </div>
 
+    <div class="section-title" style="margin-top:0;"><h2>মালিকের পছন্দ</h2></div>
+    <div class="paver" style="margin-bottom:20px; padding:14px;">
+      <p class="muted" style="margin-bottom:12px; line-height:1.6;">দোকানের পাতায় "⭐ মালিকের পছন্দ" নামে একটা সারিতে এই পণ্যগুলো আলাদা করে দেখানো হবে — এখন ${formatQty(S.tileTypes.filter(t => t.featured).length)}টা বাছাই করা আছে।</p>
+      <button class="btn btn-dark btn-sm" data-action="open-featured-manage">${Icon.plus} পছন্দের তালিকা নির্বাচন করুন</button>
+    </div>
+
     <div class="section-title" style="margin-top:0;"><h2>পণ্যসমূহ (${formatQty(S.tileTypes.length)})</h2></div>
     <div class="row-list">
       ${S.tileTypes.map(t => `
@@ -1329,6 +1339,44 @@ function openBannerManageSheet() {
     }
     await updateTileType(cb.dataset.bannerToggle, { banner: cb.checked });
     showToast(cb.checked ? "ব্যানারে যোগ হয়েছে" : "ব্যানার থেকে সরানো হয়েছে", "success");
+  });
+}
+// Same pattern as the banner picker — searchable checkbox list, capped at 8,
+// controls the "⭐ মালিকের পছন্দ" row on the shop's home feed.
+function openFeaturedManageSheet() {
+  const { close, overlay } = sheet({
+    title: "মালিকের পছন্দ নির্বাচন করুন",
+    bodyHtml: `
+      <div class="vp-search" style="margin-bottom:12px;"><input type="text" id="featSearchInput" placeholder="টাইলসের নাম খুঁজুন..." autocomplete="off"></div>
+      <p class="muted" style="margin-bottom:12px;">সর্বোচ্চ ৮টা পণ্য বাছাই করা যাবে।</p>
+      <div class="row-list" id="featList"></div>`
+  });
+  const renderList = (term) => {
+    const t2 = term.trim().toLowerCase();
+    const list = t2 ? S.tileTypes.filter(t => t.name.toLowerCase().includes(t2)) : S.tileTypes;
+    overlay.querySelector("#featList").innerHTML = list.map(t => `
+      <div class="paver row-item" style="cursor:default; padding:11px;">
+        <div class="r-icon" style="${t.imageUrl ? "background-size:cover; background-position:center;" : ""}" ${t.imageUrl ? `data-img="${escapeHtml(t.imageUrl)}"` : ""}>${t.imageUrl ? "" : Icon.box}</div>
+        <div class="r-body"><div class="r-title">${escapeHtml(t.name)}</div></div>
+        <label class="check-row" style="margin:0;">
+          <input type="checkbox" data-featured-toggle="${t.id}" ${t.featured ? "checked" : ""}>
+        </label>
+      </div>`).join("") || `<p class="muted center" style="padding:14px 0;">কিছু পাওয়া যায়নি</p>`;
+    overlay.querySelectorAll("[data-img]").forEach(el => { el.style.backgroundImage = `url('${el.dataset.img.replace(/'/g, "%27")}')`; });
+  };
+  renderList("");
+  overlay.querySelector("#featSearchInput").addEventListener("input", (e) => renderList(e.target.value));
+  overlay.querySelector("#featList").addEventListener("change", async (e) => {
+    const cb = e.target.closest("[data-featured-toggle]");
+    if (!cb) return;
+    const currentCount = S.tileTypes.filter(t => t.featured).length;
+    if (cb.checked && currentCount >= 8) {
+      cb.checked = false;
+      showToast("সর্বোচ্চ ৮টা পণ্য পছন্দে রাখা যাবে", "error");
+      return;
+    }
+    await updateTileType(cb.dataset.featuredToggle, { featured: cb.checked });
+    showToast(cb.checked ? "পছন্দে যোগ হয়েছে" : "পছন্দ থেকে সরানো হয়েছে", "success");
   });
 }
 function openShopPaymentSheet() {
@@ -1400,6 +1448,42 @@ function isEnglishColorText(s) {
 }
 // Adds any number of new colors at once — one per line (or comma-separated)
 // — instead of forcing the owner to open "+ নতুন" repeatedly per color.
+// Dashboard "টাইলস যুক্ত করুন" shortcut — creates a design then immediately
+// offers to add its colors, chaining the two existing forms together so an
+// owner can do both from one place instead of Settings + Shop Management.
+function openQuickAddTileSheet() {
+  formSheet({
+    title: "নতুন টাইলস যুক্ত করুন",
+    bodyHtml: `
+      <div class="field"><label>নাম</label><input name="name" required placeholder="যেমনঃ 8Bit"></div>
+      <div class="field">
+        <label>সাইজ (ইঞ্চি চিহ্নসহ)</label>
+        <div class="chip-select" id="qaSizeChipRow" style="margin-bottom:8px;">
+          <span class="chip" data-size="12″×12″">12″×12″</span>
+          <span class="chip" data-size="8″×24″">8″×24″</span>
+          <span class="chip" data-size="4″×8″">4″×8″</span>
+        </div>
+        <input name="size" id="qaSizeInput" placeholder='নিজে লিখলে ইঞ্চি চিহ্ন (″) ব্যবহার করুন — যেমনঃ 10″×10″'>
+      </div>
+      <div class="field" style="margin-bottom:0;"><label>কোয়ালিটি</label>
+        <select name="quality">${knownQualities().map(q => `<option value="${escapeHtml(q)}">${escapeHtml(q)}</option>`).join("")}</select>
+      </div>`,
+    submitText: "যোগ করুন",
+    onSubmit: async (data, close) => {
+      if (!data.name.trim()) throw new Error("নাম লিখুন");
+      const id = await addTileType(data.name.trim(), (data.size || "").trim(), data.quality);
+      showToast("টাইলস যোগ হয়েছে", "success");
+      close();
+      openBulkAddColorSheet(id);
+    }
+  });
+  document.querySelectorAll("#qaSizeChipRow .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      document.getElementById("qaSizeInput").value = chip.dataset.size;
+      document.querySelectorAll("#qaSizeChipRow .chip").forEach(c => c.classList.toggle("active", c === chip));
+    });
+  });
+}
 function openBulkAddColorSheet(tileTypeId) {
   const t = S.tileTypes.find(x => x.id === tileTypeId);
   formSheet({
@@ -2115,8 +2199,10 @@ async function handleAction(action, id) {
     }
     case "open-shop-payment-form": openShopPaymentSheet(); break;
     case "open-banner-manage": openBannerManageSheet(); break;
+    case "open-featured-manage": openFeaturedManageSheet(); break;
 
     case "add-variant": openBulkAddColorSheet(id); break;
+    case "quick-add-tile": openQuickAddTileSheet(); break;
     case "edit-variant": {
       const v = S.variants.find(x => x.id === id);
       if (v) openVariantFormSheet(v.tileTypeId, v);

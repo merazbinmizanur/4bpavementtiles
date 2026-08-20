@@ -316,11 +316,11 @@ export async function deliverOrder(order, { location, paymentType, pricedItems, 
 
 /* ================= online orders (public shop, no-login customers) ================= */
 // items: [{ variantId, tileTypeId, tileTypeName, quality, color, size, customSize, quantity }]
-export async function createOnlineOrder({ items, customerName, customerPhone, customerAddress, note, paymentType, trxInfo }) {
+export async function createOnlineOrder({ items, customerName, customerPhone, customerAddress, note, paymentType, trxInfo, customerUid }) {
   const ref = await addDoc(collection(db, "onlineOrders"), {
     items, customerName: customerName || "নাম নেই", customerPhone: customerPhone || "",
     customerAddress: customerAddress || "", note: note || "",
-    paymentType: paymentType || "cod", trxInfo: trxInfo || "",
+    paymentType: paymentType || "cod", trxInfo: trxInfo || "", customerUid: customerUid || "",
     status: "new", createdAt: serverTimestamp(), updatedAt: serverTimestamp()
   });
   try {
@@ -373,6 +373,31 @@ export async function trackOnlineOrder(id, phone) {
     if (osnap.exists()) linkedOrder = { id: osnap.id, ...osnap.data() };
   }
   return { order, linkedOrder };
+}
+// "আমার অর্ডার" — every order this device's anonymous session has placed.
+// Requires a firestore.rules addition (list scoped to the caller's own uid)
+// — see the note where this is called from shop.js.
+export async function getMyOnlineOrders(uid) {
+  if (!uid) return [];
+  // No orderBy in the query itself — combining it with the where() above
+  // would need a composite index created in Firestore first. Sorting
+  // client-side avoids that requirement entirely.
+  const q = query(collection(db, "onlineOrders"), where("customerUid", "==", uid));
+  const snap = await getDocs(q);
+  const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  orders.sort((a, b) => {
+    const at = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+    const bt = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+    return bt - at;
+  });
+  return orders;
+}
+// Fetches a single linked pipeline order (orders/{id}) by its own doc ID —
+// used to show the real current stage next to each "আমার অর্ডার" entry.
+export async function getOrderById(id) {
+  if (!id) return null;
+  const snap = await getDoc(doc(db, "orders", id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
 /* ================= customers / baki khata ================= */

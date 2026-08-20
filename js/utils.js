@@ -379,6 +379,11 @@ function showUpdateModal(version, notes) {
 // beforeinstallprompt), so iOS always gets illustrated manual steps instead
 // of a button that "does it for them".
 const A2HS_KEY = "4b_a2hs_declined_final";
+// Every visual property here is set INLINE (not via CSS classes) — some
+// in-app browsers (Messenger/Instagram webviews etc.) load pages in ways
+// that don't reliably apply an external stylesheet to elements injected
+// after load, and this banner needs to look right everywhere regardless.
+const A2HS_COLORS = { ink: "#262320", inkSoft: "#6B655C", terracotta: "#BF5B32", terracottaDeep: "#9C4726", terracottaTint: "#F3E0D3", cement: "#F3EEE4", white: "#FFFFFF" };
 export function initA2HSPrompt() {
   const standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone;
   if (standalone) return;
@@ -391,58 +396,66 @@ export function initA2HSPrompt() {
     deferredPrompt = e;
   });
 
+  const C = A2HS_COLORS;
+  function styledButton(bg, color) {
+    return `flex:1;height:42px;border-radius:12px;font-size:12.5px;font-weight:700;border:none;cursor:pointer;background:${bg};color:${color};font-family:inherit;`;
+  }
   function buildBanner(stage) {
     const old = document.getElementById("a2hsBanner");
     if (old) old.remove();
     const el = document.createElement("div");
-    el.className = "a2hs-banner";
     el.id = "a2hsBanner";
-    if (stage === 1) {
+    el.style.cssText = `position:fixed;left:12px;right:12px;bottom:14px;z-index:9999;max-width:436px;margin:0 auto;background:${C.white};border-radius:20px;padding:18px;box-shadow:0 10px 34px rgba(0,0,0,.28);transform:translateY(160%);transition:transform .4s cubic-bezier(.16,.9,.3,1);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-sizing:border-box;`;
+    if (stage === 1 || stage === 2) {
+      const title = stage === 1 ? "হোমস্ক্রিনে যোগ করুন" : "সত্যিই বাদ দেবেন?";
+      const sub = stage === 1
+        ? "প্রতিবার লিংক খোঁজার বদলে সরাসরি অ্যাপের মতো এক ট্যাপে খুলুন"
+        : "হোমস্ক্রিনে যোগ না করলে প্রতিবার ব্রাউজারে গিয়ে লিংক খুঁজে ঢুকতে হবে — কষ্ট হবে। একবার যোগ করে রাখলে সবসময় হাতের কাছেই থাকবে।";
+      const iconHtml = stage === 1
+        ? `<span style="width:52px;height:52px;border-radius:16px;overflow:hidden;flex-shrink:0;box-shadow:0 10px 20px -8px rgba(191,91,50,.4);display:block;"><img src="icons/icon-maskable-512.png" width="52" height="52" alt="" style="width:52px;height:52px;object-fit:cover;display:block;"></span>`
+        : "";
+      const skipId = stage === 1 ? "a2hsSkip1" : "a2hsSkip2";
+      const addId = stage === 1 ? "a2hsAdd1" : "a2hsAdd2";
+      const skipLabel = stage === 1 ? "না, থাক" : "না, দরকার নেই";
       el.innerHTML = `
-        <div class="a2hs-row">
-          <span class="a2hs-icon"><img src="icons/icon-maskable-512.png" alt=""></span>
+        <div style="display:flex;align-items:center;gap:13px;">
+          ${iconHtml}
           <div>
-            <div class="a2hs-title">হোমস্ক্রিনে যোগ করুন</div>
-            <div class="a2hs-sub">প্রতিবার লিংক খোঁজার বদলে সরাসরি অ্যাপের মতো এক ট্যাপে খুলুন</div>
+            <div style="font-size:14px;font-weight:800;color:${C.ink};">${title}</div>
+            <div style="font-size:11.5px;color:${C.inkSoft};margin-top:3px;line-height:1.5;">${sub}</div>
           </div>
         </div>
-        <div class="a2hs-actions">
-          <button class="a2hs-btn-ghost" id="a2hsSkip1">না, থাক</button>
-          <button class="a2hs-btn-primary" id="a2hsAdd1">যোগ করুন</button>
-        </div>`;
-    } else if (stage === 2) {
-      el.innerHTML = `
-        <div class="a2hs-title">সত্যিই বাদ দেবেন?</div>
-        <div class="a2hs-sub" style="margin-top:6px;">হোমস্ক্রিনে যোগ না করলে প্রতিবার ব্রাউজারে গিয়ে লিংক খুঁজে ঢুকতে হবে — কষ্ট হবে। একবার যোগ করে রাখলে সবসময় হাতের কাছেই থাকবে।</div>
-        <div class="a2hs-actions">
-          <button class="a2hs-btn-ghost" id="a2hsSkip2">না, দরকার নেই</button>
-          <button class="a2hs-btn-primary" id="a2hsAdd2">যোগ করুন</button>
+        <div style="display:flex;gap:9px;margin-top:14px;">
+          <button id="${skipId}" style="${styledButton(C.cement, C.inkSoft)}">${skipLabel}</button>
+          <button id="${addId}" style="${styledButton(`linear-gradient(135deg, ${C.terracotta}, ${C.terracottaDeep})`, C.white)}">যোগ করুন</button>
         </div>`;
     } else {
+      const stepStyle = "display:flex;align-items:center;gap:11px;font-size:12px;color:" + C.ink + ";line-height:1.4;";
+      const numStyle = `width:22px;height:22px;border-radius:50%;background:${C.terracottaTint};color:${C.terracottaDeep};font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;`;
       el.innerHTML = `
-        <div class="a2hs-row">
-          <span class="a2hs-icon"><img src="icons/icon-maskable-512.png" alt=""></span>
+        <div style="display:flex;align-items:center;gap:13px;">
+          <span style="width:52px;height:52px;border-radius:16px;overflow:hidden;flex-shrink:0;box-shadow:0 10px 20px -8px rgba(191,91,50,.4);display:block;"><img src="icons/icon-maskable-512.png" width="52" height="52" alt="" style="width:52px;height:52px;object-fit:cover;display:block;"></span>
           <div>
-            <div class="a2hs-title">হোমস্ক্রিনে যোগ করুন</div>
-            <div class="a2hs-sub">নিচের ধাপ অনুসরণ করুন</div>
+            <div style="font-size:14px;font-weight:800;color:${C.ink};">হোমস্ক্রিনে যোগ করুন</div>
+            <div style="font-size:11.5px;color:${C.inkSoft};margin-top:3px;">নিচের ধাপ অনুসরণ করুন</div>
           </div>
         </div>
-        <div class="a2hs-ios-steps">
-          <div class="a2hs-ios-step"><span class="a2hs-ios-num">১</span><svg class="a2hs-ios-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg> নিচের শেয়ার (Share) আইকনে চাপুন</div>
-          <div class="a2hs-ios-step"><span class="a2hs-ios-num">২</span><svg class="a2hs-ios-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg> স্ক্রল করে "Add to Home Screen" বাছুন</div>
-          <div class="a2hs-ios-step"><span class="a2hs-ios-num">৩</span><svg class="a2hs-ios-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> উপরে ডানে "Add" চাপুন</div>
+        <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px;">
+          <div style="${stepStyle}"><span style="${numStyle}">১</span> নিচের শেয়ার (Share) আইকনে চাপুন</div>
+          <div style="${stepStyle}"><span style="${numStyle}">২</span> স্ক্রল করে "Add to Home Screen" বাছুন</div>
+          <div style="${stepStyle}"><span style="${numStyle}">৩</span> উপরে ডানে "Add" চাপুন</div>
         </div>
-        <div class="a2hs-actions">
-          <button class="a2hs-btn-primary" id="a2hsIosDone" style="flex:1;">বুঝেছি</button>
+        <div style="margin-top:14px;">
+          <button id="a2hsIosDone" style="${styledButton(`linear-gradient(135deg, ${C.terracotta}, ${C.terracottaDeep})`, C.white)}width:100%;">বুঝেছি</button>
         </div>`;
     }
     document.body.appendChild(el);
-    requestAnimationFrame(() => el.classList.add("show"));
+    requestAnimationFrame(() => { el.style.transform = "translateY(0)"; });
     return el;
   }
 
   function closeBanner(el, cb) {
-    el.classList.remove("show");
+    el.style.transform = "translateY(160%)";
     setTimeout(() => { el.remove(); if (cb) cb(); }, 350);
   }
 
@@ -479,4 +492,111 @@ export function initA2HSPrompt() {
   }
 
   setTimeout(showStage1, 2200);
+}
+
+// ---------------- dark mode toggle ----------------
+// The actual theme is already applied before this runs (see the small
+// inline script in each HTML file's <head>, which reads the same
+// localStorage key before first paint to avoid a flash of the wrong
+// theme). This just wires the visible button: swaps its icon to match
+// the CURRENT theme and flips data-theme + the saved preference on tap.
+const THEME_KEY = "4b_theme";
+const SUN_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2.5 12H5M19 12h2.5M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>`;
+const MOON_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>`;
+export function initThemeToggle(btnId) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  const paint = () => {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    btn.innerHTML = isDark ? SUN_ICON : MOON_ICON;
+  };
+  paint();
+  btn.addEventListener("click", () => {
+    const goingDark = document.documentElement.getAttribute("data-theme") !== "dark";
+    if (goingDark) document.documentElement.setAttribute("data-theme", "dark");
+    else document.documentElement.removeAttribute("data-theme");
+    try { localStorage.setItem(THEME_KEY, goingDark ? "dark" : "light"); } catch (e) { /* ignored */ }
+    paint();
+  });
+}
+
+// ---------------- guided tour (first-login spotlight walkthrough) ----------------
+// Cuts a real "hole" in a dark overlay around each target element in turn
+// (SVG mask — the darkened rect is masked transparent exactly where the
+// hole rect sits) with a glowing ring and a positioned tooltip. Runs once
+// per person (keyed by their uid, so a shared device still shows it to
+// each new user) and is skippable at any step.
+export function initGuidedTour(steps, storageKey) {
+  try { if (localStorage.getItem(storageKey)) return; } catch (e) { return; }
+  const usable = steps.filter(s => document.querySelector(s.selector));
+  if (!usable.length) return;
+
+  let idx = 0, el, holeRect, ring, tooltip;
+
+  function build() {
+    el = document.createElement("div");
+    el.className = "tour-overlay";
+    el.innerHTML = `
+      <svg class="tour-svg">
+        <defs><mask id="tourMask"><rect width="100%" height="100%" fill="white"/><rect id="tourHole" rx="16" fill="black"/></mask></defs>
+        <rect width="100%" height="100%" fill="rgba(10,8,6,.78)" mask="url(#tourMask)"/>
+      </svg>
+      <div class="tour-ring" id="tourRing"></div>
+      <div class="tour-tooltip" id="tourTooltip">
+        <span class="tour-step-count" id="tourCount"></span>
+        <h4 class="tour-title" id="tourTitle"></h4>
+        <p class="tour-desc" id="tourDesc"></p>
+        <div class="tour-actions">
+          <button type="button" class="tour-skip" id="tourSkip">এড়িয়ে যান</button>
+          <button type="button" class="tour-next" id="tourNext">পরবর্তী</button>
+        </div>
+        <div class="tour-dots" id="tourDots"></div>
+      </div>`;
+    document.body.appendChild(el);
+    holeRect = el.querySelector("#tourHole");
+    ring = el.querySelector("#tourRing");
+    tooltip = el.querySelector("#tourTooltip");
+    el.querySelector("#tourSkip").addEventListener("click", finish);
+    el.querySelector("#tourNext").addEventListener("click", goNext);
+    requestAnimationFrame(() => el.classList.add("show"));
+  }
+
+  function place() {
+    const step = usable[idx];
+    const target = document.querySelector(step.selector);
+    if (!target) { goNext(); return; }
+    tooltip.classList.remove("show");
+    target.scrollIntoView({ block: "center" });
+    setTimeout(() => {
+      const r = target.getBoundingClientRect();
+      const pad = 8;
+      const x = r.left - pad, y = r.top - pad, w = r.width + pad * 2, h = r.height + pad * 2;
+      holeRect.setAttribute("x", x); holeRect.setAttribute("y", y);
+      holeRect.setAttribute("width", w); holeRect.setAttribute("height", h);
+      ring.style.left = x + "px"; ring.style.top = y + "px";
+      ring.style.width = w + "px"; ring.style.height = h + "px";
+      const spaceBelow = window.innerHeight - r.bottom;
+      if (spaceBelow > 190) { tooltip.style.top = (r.bottom + 20) + "px"; tooltip.style.bottom = "auto"; }
+      else { tooltip.style.bottom = (window.innerHeight - r.top + 20) + "px"; tooltip.style.top = "auto"; }
+      el.querySelector("#tourCount").textContent = `${idx + 1} / ${usable.length}`;
+      el.querySelector("#tourTitle").textContent = step.title;
+      el.querySelector("#tourDesc").textContent = step.desc;
+      el.querySelector("#tourNext").textContent = idx === usable.length - 1 ? "শেষ করুন" : "পরবর্তী";
+      el.querySelector("#tourDots").innerHTML = usable.map((_, i) => `<span class="tour-dot${i === idx ? " active" : ""}"></span>`).join("");
+      tooltip.classList.add("show");
+    }, 220);
+  }
+
+  function goNext() {
+    idx++;
+    if (idx >= usable.length) { finish(); return; }
+    place();
+  }
+  function finish() {
+    try { localStorage.setItem(storageKey, "1"); } catch (e) { /* ignored */ }
+    if (el) { el.classList.remove("show"); setTimeout(() => el.remove(), 300); }
+  }
+
+  build();
+  place();
 }

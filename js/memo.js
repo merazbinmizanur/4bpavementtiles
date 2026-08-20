@@ -68,7 +68,7 @@ export function showMemo(sale, shopInfo = {}) {
       await loadScript(H2C_SRC);
       const node = overlay.querySelector("#memoCapture");
       if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
-      const canvas = await window.html2canvas(node, { scale: 2.5, backgroundColor: "#ffffff" });
+      const canvas = await window.html2canvas(node, { scale: 2.5, backgroundColor: "#ffffff", width: node.scrollWidth, windowWidth: node.scrollWidth });
       const link = document.createElement("a");
       link.download = `4B-Memo-${sale.id.slice(-6)}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -90,11 +90,18 @@ export function showMemo(sale, shopInfo = {}) {
       await loadScript(JSPDF_SRC);
       const node = overlay.querySelector("#memoCapture");
       if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
-      const canvas = await window.html2canvas(node, { scale: 2.5, backgroundColor: "#ffffff" });
+      const canvas = await window.html2canvas(node, { scale: 2.5, backgroundColor: "#ffffff", width: node.scrollWidth, windowWidth: node.scrollWidth });
       const { jsPDF } = window.jspdf;
       const imgData = canvas.toDataURL("image/png");
-      const pdfWidth = 210;
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      // Size the PDF page from the memo's own natural proportions (a narrow
+      // receipt shape) instead of forcing it into a fixed A4 width — that
+      // stretch was causing content to run past the visible page in some
+      // mobile PDF viewers. 96 CSS-px/inch is the standard web assumption;
+      // dividing by the html2canvas scale factor undoes the 2.5x upscale
+      // used for capture resolution, back to the element's real CSS size.
+      const MM_PER_PX = 25.4 / 96;
+      const pdfWidth = (canvas.width / 2.5) * MM_PER_PX;
+      const pdfHeight = (canvas.height / 2.5) * MM_PER_PX;
       const pdf = new jsPDF({ unit: "mm", format: [pdfWidth, pdfHeight] });
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`4B-Memo-${sale.id.slice(-6)}.pdf`);
@@ -150,7 +157,7 @@ export function showPayslip(salary, shopInfo = {}, monthLabel = "") {
     try {
       await loadScript(H2C_SRC);
       if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
-      const canvas = await window.html2canvas(overlay.querySelector("#payslipCapture"), { scale: 2.5, backgroundColor: "#ffffff" });
+      const canvas = await window.html2canvas(overlay.querySelector("#payslipCapture"), { scale: 2.5, backgroundColor: "#ffffff", width: overlay.querySelector("#payslipCapture").scrollWidth, windowWidth: overlay.querySelector("#payslipCapture").scrollWidth });
       const link = document.createElement("a");
       link.download = `${fname}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -167,11 +174,18 @@ export function showPayslip(salary, shopInfo = {}, monthLabel = "") {
       await loadScript(H2C_SRC);
       await loadScript(JSPDF_SRC);
       if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
-      const canvas = await window.html2canvas(overlay.querySelector("#payslipCapture"), { scale: 2.5, backgroundColor: "#ffffff" });
+      const canvas = await window.html2canvas(overlay.querySelector("#payslipCapture"), { scale: 2.5, backgroundColor: "#ffffff", width: overlay.querySelector("#payslipCapture").scrollWidth, windowWidth: overlay.querySelector("#payslipCapture").scrollWidth });
       const { jsPDF } = window.jspdf;
       const imgData = canvas.toDataURL("image/png");
-      const pdfWidth = 210;
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      // Size the PDF page from the memo's own natural proportions (a narrow
+      // receipt shape) instead of forcing it into a fixed A4 width — that
+      // stretch was causing content to run past the visible page in some
+      // mobile PDF viewers. 96 CSS-px/inch is the standard web assumption;
+      // dividing by the html2canvas scale factor undoes the 2.5x upscale
+      // used for capture resolution, back to the element's real CSS size.
+      const MM_PER_PX = 25.4 / 96;
+      const pdfWidth = (canvas.width / 2.5) * MM_PER_PX;
+      const pdfHeight = (canvas.height / 2.5) * MM_PER_PX;
       const pdf = new jsPDF({ unit: "mm", format: [pdfWidth, pdfHeight] });
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${fname}.pdf`);
@@ -235,7 +249,7 @@ export function showSalarySheet(salaries, monthLabel, shopInfo = {}) {
     try {
       await loadScript(H2C_SRC);
       if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
-      const canvas = await window.html2canvas(overlay.querySelector("#salarySheetCapture"), { scale: 2.5, backgroundColor: "#ffffff" });
+      const canvas = await window.html2canvas(overlay.querySelector("#salarySheetCapture"), { scale: 2.5, backgroundColor: "#ffffff", width: overlay.querySelector("#salarySheetCapture").scrollWidth, windowWidth: overlay.querySelector("#salarySheetCapture").scrollWidth });
       const link = document.createElement("a");
       link.download = `${fname}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -252,11 +266,18 @@ export function showSalarySheet(salaries, monthLabel, shopInfo = {}) {
       await loadScript(H2C_SRC);
       await loadScript(JSPDF_SRC);
       if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
-      const canvas = await window.html2canvas(overlay.querySelector("#salarySheetCapture"), { scale: 2.5, backgroundColor: "#ffffff" });
+      const canvas = await window.html2canvas(overlay.querySelector("#salarySheetCapture"), { scale: 2.5, backgroundColor: "#ffffff", width: overlay.querySelector("#salarySheetCapture").scrollWidth, windowWidth: overlay.querySelector("#salarySheetCapture").scrollWidth });
       const { jsPDF } = window.jspdf;
       const imgData = canvas.toDataURL("image/png");
-      const pdfWidth = 210;
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      // Size the PDF page from the memo's own natural proportions (a narrow
+      // receipt shape) instead of forcing it into a fixed A4 width — that
+      // stretch was causing content to run past the visible page in some
+      // mobile PDF viewers. 96 CSS-px/inch is the standard web assumption;
+      // dividing by the html2canvas scale factor undoes the 2.5x upscale
+      // used for capture resolution, back to the element's real CSS size.
+      const MM_PER_PX = 25.4 / 96;
+      const pdfWidth = (canvas.width / 2.5) * MM_PER_PX;
+      const pdfHeight = (canvas.height / 2.5) * MM_PER_PX;
       const pdf = new jsPDF({ unit: "mm", format: [pdfWidth, pdfHeight] });
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${fname}.pdf`);

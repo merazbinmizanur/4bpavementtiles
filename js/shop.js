@@ -11,14 +11,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import { Icon } from "./icons.js";
 import { getProfile } from "./auth.js";
-import { subscribeTileTypes, subscribeVariants, subscribeShopInfo, createOnlineOrder, trackOnlineOrder } from "./data.js";
+import { subscribeTileTypes, subscribeVariants, subscribeShopInfo, createOnlineOrder, trackOnlineOrder, getMyOnlineOrders, getOrderById } from "./data.js";
 import {
-  showToast, escapeHtml, formatQty, formatDateBN, toDate, openOverlay, closeOverlay, initUpdateWatcher, initA2HSPrompt
+  showToast, escapeHtml, formatQty, formatDateBN, formatDateTimeBN, toDate, openOverlay, closeOverlay, initUpdateWatcher, initA2HSPrompt, initThemeToggle, initGuidedTour
 } from "./utils.js";
 
 const S = { tileTypes: [], variants: [], shopInfo: {} };
 const cart = []; // [{ variantId, tileTypeId, tileTypeName, quality, color, size, customSize, quantity }]
 let started = false;
+let shopTourStarted = false;
 let submitting = false;
 let searchTerm = "";
 let wishlistOnly = false;
@@ -84,6 +85,7 @@ if ("serviceWorker" in navigator) {
   initUpdateWatcher();
 }
 initA2HSPrompt();
+initThemeToggle("themeToggleBtn");
 
 /* ================= wishlist (client-only, no login needed) ================= */
 function getWishlist() {
@@ -139,7 +141,23 @@ function startShop() {
   started = true;
   const gridEl = document.getElementById("productGrid");
   if (gridEl) gridEl.innerHTML = shopSkeletonGrid();
-  subscribeTileTypes(v => { S.tileTypes = v; renderBanner(); renderGrid(); });
+  subscribeTileTypes(v => {
+    S.tileTypes = v;
+    renderBanner();
+    renderGrid();
+    if (v.length && !shopTourStarted) {
+      shopTourStarted = true;
+      setTimeout(() => {
+        initGuidedTour([
+          { selector: ".shop-search", title: "টাইলস খুঁজুন", desc: "নাম লিখে সরাসরি পছন্দের টাইলস খুঁজে বের করতে পারবেন।" },
+          { selector: ".sc-add", title: "কার্টে যোগ করুন", desc: "পছন্দের টাইলসে ট্যাপ করে কালার-পরিমাণ বেছে \"অর্ডার\" বাটনে চাপলেই কার্টে যোগ হয়ে যাবে।" },
+          { selector: "#myOrdersBtn", title: "আমার অর্ডার", desc: "আগে যত অর্ডার করেছেন, সবগুলো এখান থেকে এক জায়গায় দেখতে পারবেন — কিছু টাইপ না করেই।" },
+          { selector: "#trackOpenBtn", title: "অর্ডার ট্র্যাক করুন", desc: "ট্র্যাকিং নম্বর ও ফোন নম্বর দিয়ে যেকোনো একটা নির্দিষ্ট অর্ডারের বর্তমান অবস্থা দেখতে পারবেন।" },
+          { selector: ".shop-login-btn", title: "মালিক অথবা ম্যানেজার?", desc: "আপনি যদি এই দোকানের মালিক বা ম্যানেজার হয়ে থাকেন, ব্যবস্থাপনা প্যানেলে ঢুকতে এখানে চাপুন। সাধারণ ক্রেতা হিসেবে কেনাকাটা করতে চাইলে এটার প্রয়োজন নেই — নিশ্চিন্তে এড়িয়ে যেতে পারেন।" }
+        ], "4b_shop_tour_seen");
+      }, 700);
+    }
+  });
   subscribeVariants(v => { S.variants = v; });
   subscribeShopInfo(v => { 
     S.shopInfo = v || {}; 
@@ -162,7 +180,7 @@ function startShop() {
     const seeAll = e.target.closest("[data-seeall]");
     if (seeAll) { openCategoryPage(seeAll.dataset.seeall); return; }
     const card = e.target.closest("[data-tile]");
-    if (card) openItemSheet(card.dataset.tile);
+    if (card) { spawnRipple(card, e.clientX, e.clientY); openItemSheet(card.dataset.tile); }
   });
   document.getElementById("bannerTrack").addEventListener("click", (e) => {
     const slide = e.target.closest("[data-tile]");
@@ -179,6 +197,7 @@ function startShop() {
     renderGrid();
   });
   document.getElementById("trackOpenBtn").addEventListener("click", openTrackSheet);
+  document.getElementById("myOrdersBtn").addEventListener("click", openMyOrdersSheet);
 }
 
 function setupShopTabs() {
@@ -238,8 +257,38 @@ function onWishToggle(el) {
   const active = toggleWishlist(id);
   el.classList.toggle("active", active);
   el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+  if (active) spawnWishSparkle(el);
   showToast(active ? "পছন্দের তালিকায় যোগ হয়েছে" : "পছন্দের তালিকা থেকে সরানো হয়েছে", "success");
   if (wishlistOnly) renderGrid();
+}
+function spawnWishSparkle(el) {
+  const wrap = document.createElement("span");
+  wrap.className = "wish-sparkle-wrap";
+  const n = 7;
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i) / n + Math.random() * 0.4;
+    const dist = 16 + Math.random() * 10;
+    const spark = document.createElement("span");
+    spark.className = "wish-spark";
+    spark.style.setProperty("--sx", `${Math.cos(angle) * dist}px`);
+    spark.style.setProperty("--sy", `${Math.sin(angle) * dist}px`);
+    spark.style.animationDelay = `${(Math.random() * 0.08).toFixed(2)}s`;
+    wrap.appendChild(spark);
+  }
+  el.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 750);
+}
+// Material-style tap ripple, positioned at the actual touch/click point.
+function spawnRipple(cardEl, clientX, clientY) {
+  const rect = cardEl.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 1.3;
+  const ripple = document.createElement("span");
+  ripple.className = "sc-ripple";
+  ripple.style.width = ripple.style.height = `${size}px`;
+  ripple.style.left = `${clientX - rect.left - size / 2}px`;
+  ripple.style.top = `${clientY - rect.top - size / 2}px`;
+  cardEl.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
 }
 
 function renderShopInfo() {
@@ -326,8 +375,11 @@ function bestSellingIds() {
 function cardHtml(t, i) {
   const bestIds = bestSellingIds();
   const wishlist = getWishlist();
+  const repVariant = S.variants.find(v => v.tileTypeId === t.id && v.color);
+  const repHex = repVariant ? colorSwatchStops(repVariant.color)[0] : null;
+  const shadowStyle = repHex ? `box-shadow:0 1px 1px rgba(38,35,32,.04), 0 10px 24px -10px ${repHex}77;` : "";
   return `
-    <div class="shop-card" data-tile="${t.id}" style="animation-delay:${(i * 0.04).toFixed(2)}s">
+    <div class="shop-card" data-tile="${t.id}" style="animation-delay:${(i * 0.04).toFixed(2)}s; ${shadowStyle}">
       <div class="sc-thumb ${t.imageUrl ? "" : THUMB_VARIANTS[i % 3]}">
         <span></span>
         ${bestIds.includes(t.id) ? `<span class="sc-best">🔥 সবচেয়ে বিক্রিত</span>` : ""}
@@ -341,7 +393,17 @@ function cardHtml(t, i) {
 function applyThumbImages(container, list) {
   container.querySelectorAll("[data-tile]").forEach(card => {
     const t = list.find(x => x.id === card.dataset.tile);
-    if (t && t.imageUrl) card.querySelector(".sc-thumb").style.backgroundImage = `url('${t.imageUrl.replace(/'/g, "%27")}')`;
+    if (t && t.imageUrl) {
+      const thumb = card.querySelector(".sc-thumb");
+      thumb.style.opacity = "0";
+      const img = new Image();
+      img.onload = () => {
+        thumb.style.backgroundImage = `url('${t.imageUrl.replace(/'/g, "%27")}')`;
+        thumb.style.opacity = "1";
+      };
+      img.onerror = () => { thumb.style.opacity = "1"; };
+      img.src = t.imageUrl;
+    }
   });
 }
 function tsMillis(t) { return t && t.createdAt && t.createdAt.toMillis ? t.createdAt.toMillis() : 0; }
@@ -351,10 +413,37 @@ function newestList() {
 function sizeGroups() {
   const map = {};
   S.tileTypes.forEach(t => {
-    const key = t.size || "অন্যান্য";
+    // Straight " and the proper ″ inch-mark look identical but are different
+    // characters — normalize so tiles entered with either one still group
+    // together instead of splitting into two visually-duplicate rows.
+    const key = (t.size || "অন্যান্য").replace(/"/g, "″").trim();
     (map[key] = map[key] || []).push(t);
   });
-  return Object.entries(map).filter(([, items]) => items.length >= 2);
+  return Object.entries(map);
+}
+function qualityGroups() {
+  const map = {};
+  S.tileTypes.forEach(t => {
+    const key = t.quality || "অন্যান্য";
+    (map[key] = map[key] || []).push(t);
+  });
+  return Object.entries(map);
+}
+const RECENT_KEY = "4b_shop_recent";
+function trackRecentView(tileTypeId) {
+  let ids = [];
+  try { ids = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch (e) { ids = []; }
+  ids = ids.filter(id => id !== tileTypeId);
+  ids.unshift(tileTypeId);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(ids.slice(0, 10)));
+}
+function recentList() {
+  let ids = [];
+  try { ids = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch (e) { ids = []; }
+  return ids.map(id => S.tileTypes.find(t => t.id === id)).filter(Boolean);
+}
+function featuredList() {
+  return S.tileTypes.filter(t => t.featured);
 }
 let rowFullLists = {}; // key -> { title, items } — populated by renderRows, read by "সব দেখুন"
 function rowSectionHtml(title, items, key) {
@@ -369,6 +458,7 @@ function rowSectionHtml(title, items, key) {
     <div class="shop-row-section">
       <div class="shop-row-title">${escapeHtml(title)}</div>
       <div class="shop-row-track">${shown.map((t, i) => cardHtml(t, i)).join("")}${seeAll}</div>
+      ${shown.length + (seeAll ? 1 : 0) > 2 ? `<div class="shop-row-progress"><div class="shop-row-progress-bar"></div></div>` : ""}
     </div>`;
 }
 function renderRows(container) {
@@ -377,12 +467,34 @@ function renderRows(container) {
   const bestIds = bestSellingIds();
   const best = S.tileTypes.filter(t => bestIds.includes(t.id));
   if (best.length) sections.push(rowSectionHtml("🔥 সবচেয়ে বিক্রিত", best, "best"));
+  const featured = featuredList();
+  if (featured.length) sections.push(rowSectionHtml("⭐ মালিকের পছন্দ", featured, "featured"));
   const newest = newestList();
   if (newest.length) sections.push(rowSectionHtml("✨ নতুন যোগ হয়েছে", newest, "newest"));
-  sizeGroups().forEach(([size, items], i) => sections.push(rowSectionHtml(`সাইজঃ ${escapeHtml(size)}`, items, `size-${i}`)));
+  const recent = recentList();
+  if (recent.length) sections.push(rowSectionHtml("🕓 সাম্প্রতিক দেখা", recent, "recent"));
+  sizeGroups().forEach(([size, items], i) => sections.push(rowSectionHtml(`সাইজঃ ${size}`, items, `size-${i}`)));
+  qualityGroups().forEach(([q, items], i) => sections.push(rowSectionHtml(`কোয়ালিটিঃ ${q}`, items, `quality-${i}`)));
   if (!sections.length) sections.push(rowSectionHtml("আমাদের টাইলস", S.tileTypes, "all"));
   container.innerHTML = sections.join("");
-  container.querySelectorAll(".shop-row-track").forEach(track => applyThumbImages(track, S.tileTypes));
+  container.querySelectorAll(".shop-row-track").forEach(track => {
+    applyThumbImages(track, S.tileTypes);
+    wireRowScrollProgress(track);
+  });
+}
+// Updates the thin progress bar under a row as the user scrolls it horizontally.
+function wireRowScrollProgress(track) {
+  const bar = track.parentElement.querySelector(".shop-row-progress-bar");
+  if (!bar) return;
+  const update = () => {
+    const max = track.scrollWidth - track.clientWidth;
+    const pct = max > 0 ? Math.min(1, track.scrollLeft / max) : 0;
+    const barWidth = 35; // % of the progress track the moving bar occupies
+    bar.style.width = `${barWidth}%`;
+    bar.style.marginLeft = `${pct * (100 - barWidth)}%`;
+  };
+  update();
+  track.addEventListener("scroll", update, { passive: true });
 }
 function openCategoryPage(key) {
   const data = rowFullLists[key];
@@ -404,7 +516,7 @@ function openCategoryPage(key) {
     const heart = e.target.closest("[data-wish]");
     if (heart) { onWishToggle(heart); return; }
     const card = e.target.closest("[data-tile]");
-    if (card) openItemSheet(card.dataset.tile);
+    if (card) { spawnRipple(card, e.clientX, e.clientY); openItemSheet(card.dataset.tile); }
   });
 }
 function shopSkeletonGrid(count = 6) {
@@ -447,6 +559,7 @@ function renderGrid() {
 function openItemSheet(tileId) {
   const t = S.tileTypes.find(x => x.id === tileId);
   if (!t) return;
+  trackRecentView(tileId);
   const variant = THUMB_VARIANTS[Math.abs(tileId.split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % 3];
   const wished = getWishlist().has(t.id);
   const tileVariants = S.variants.filter(v => v.tileTypeId === t.id);
@@ -560,17 +673,29 @@ function openCartSheet() {
   if (!cart.length) return;
   const overlay = document.createElement("div");
   overlay.className = "overlay";
+  const totalQty = () => cart.reduce((a, it) => a + it.quantity, 0);
+  const updateHdrSub = () => {
+    const el = overlay.querySelector(".cart-hdr-sub");
+    if (el) el.textContent = `${formatQty(cart.length)} ধরনের টাইলস · মোট ${formatQty(totalQty())} পিস`;
+  };
   const linesHtml = () => cart.map((it, i) => `
-    <div class="cart-line">
-      <div style="flex:1;"><div class="cl-name">${escapeHtml(itemLabel(it))}</div><div class="cl-meta">${formatQty(it.quantity)} পিস</div></div>
-      <span class="cl-del" data-rm="${i}">${Icon.trash}</span>
+    <div class="cart-line" style="animation-delay:${(i * 0.06).toFixed(2)}s">
+      <span class="cl-swatch" style="${colorSwatchStyle(it.color)}"></span>
+      <div class="cl-body">
+        <div class="cl-name">${escapeHtml(itemLabel(it))}</div>
+        <span class="cl-qty-pill">${formatQty(it.quantity)} পিস</span>
+      </div>
+      <button type="button" class="cl-del" data-rm="${i}">${Icon.trash}</button>
     </div>`).join("");
   overlay.innerHTML = `
     <div class="sheet">
       <div class="sheet-handle"></div>
-      <h3 style="font-size:17px; margin-bottom:14px;">আপনার কার্ট</h3>
+      <div class="cart-hdr">
+        <span class="cart-hdr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3h2.2l2.1 11.4a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 2-1.6L21 7H6"/></svg></span>
+        <div><h3>আপনার কার্ট</h3><span class="cart-hdr-sub">${formatQty(cart.length)} ধরনের টাইলস · মোট ${formatQty(totalQty())} পিস</span></div>
+      </div>
       <div id="cartLines">${linesHtml()}</div>
-      <button class="btn btn-primary" id="cartNextBtn" style="width:100%; margin-top:16px;">অর্ডার সম্পন্ন করুন</button>
+      <button class="btn btn-primary cart-next-btn" id="cartNextBtn">অর্ডার সম্পন্ন করুন</button>
     </div>`;
   document.body.appendChild(overlay);
   requestAnimationFrame(() => openOverlay(overlay));
@@ -579,10 +704,16 @@ function openCartSheet() {
     if (e.target === overlay) { close(); return; }
     const rm = e.target.closest("[data-rm]");
     if (rm) {
-      cart.splice(Number(rm.dataset.rm), 1);
-      updateCartBar();
-      if (!cart.length) { close(); return; }
-      overlay.querySelector("#cartLines").innerHTML = linesHtml();
+      const lineEl = rm.closest(".cart-line");
+      const idx = Number(rm.dataset.rm);
+      lineEl.classList.add("removing");
+      setTimeout(() => {
+        cart.splice(idx, 1);
+        updateCartBar();
+        if (!cart.length) { close(); return; }
+        overlay.querySelector("#cartLines").innerHTML = linesHtml();
+        updateHdrSub();
+      }, 260);
     }
   });
   overlay.querySelector("#cartNextBtn").addEventListener("click", () => { close(); setTimeout(openCheckoutSheet, 260); });
@@ -649,7 +780,7 @@ function openCheckoutSheet() {
       const orderId = await createOnlineOrder({
         items: cartSnapshot.map(it => ({ variantId: it.variantId, tileTypeId: it.tileTypeId, tileTypeName: it.tileTypeName, quality: it.quality || "", color: it.color || "", size: it.size, customSize: it.customSize, quantity: it.quantity })),
         customerName: name, customerPhone: phone, customerAddress: address,
-        note, paymentType: payType, trxInfo: trx
+        note, paymentType: payType, trxInfo: trx, customerUid: auth.currentUser ? auth.currentUser.uid : ""
       });
       cart.length = 0;
       updateCartBar();
@@ -757,6 +888,78 @@ function openTrackSheet() {
       btn.textContent = original;
     }
   });
+}
+// "আমার অর্ডার" — no typing needed, looked up from this device's own
+// anonymous session (see getMyOnlineOrders + the customerUid stored at
+// order-creation time). Needs a matching firestore.rules addition to work —
+// see the note on getMyOnlineOrders in data.js.
+async function openMyOrdersSheet() {
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <h3 style="font-size:17px; margin-bottom:14px;">আমার অর্ডার</h3>
+      <div id="myOrdersResult"><div class="spinner spinner-dark" style="margin:24px auto; display:block;"></div></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => openOverlay(overlay));
+  const close = () => { closeOverlay(overlay); setTimeout(() => overlay.remove(), 250); };
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) { close(); return; }
+    const copyBtn = e.target.closest("[data-copy]");
+    if (copyBtn) {
+      navigator.clipboard.writeText(copyBtn.dataset.copy)
+        .then(() => showToast("কপি হয়েছে", "success"))
+        .catch(() => showToast("কপি করা যায়নি", "error"));
+    }
+  });
+
+  const resultEl = overlay.querySelector("#myOrdersResult");
+  try {
+    const uid = auth.currentUser ? auth.currentUser.uid : "";
+    const orders = await getMyOnlineOrders(uid);
+    if (!orders.length) {
+      resultEl.innerHTML = `<p class="muted center" style="padding:20px 0;">এই ফোনে এখনো কোনো অর্ডার করা হয়নি</p>`;
+      return;
+    }
+    // Fetch each order's linked pipeline order (if staff already accepted
+    // it) so the status badge reflects real progress, not just "submitted".
+    const withLinked = await Promise.all(orders.map(async (o) => {
+      if (!o.orderId) return { o, linkedOrder: null };
+      try { return { o, linkedOrder: await getOrderById(o.orderId) }; }
+      catch (e) { return { o, linkedOrder: null }; }
+    }));
+    resultEl.innerHTML = withLinked.map(({ o, linkedOrder }) => renderMyOrderCard(o, linkedOrder)).join("");
+  } catch (err) {
+    console.error(err);
+    const isPermission = err && err.code === "permission-denied";
+    resultEl.innerHTML = `<p class="muted center" style="padding:20px 0;">লোড করা যায়নি, আবার চেষ্টা করুন${isPermission ? `<br><small style="color:var(--danger);">(অনুমতি সমস্যা — firestore.rules-এ onlineOrders-এর list নিয়ম ঠিকমতো যোগ হয়েছে কিনা দেখুন)</small>` : (err && err.code ? `<br><small style="color:var(--ink-faint);">(কোড: ${escapeHtml(err.code)})</small>` : "")}</p>`;
+  }
+}
+// "আমার অর্ডার" card — deliberately NOT the step-by-step timeline (that's
+// what "ট্র্যাক করুন" already shows); here the point is a scannable summary:
+// when it was placed, its tracking number, exactly what was ordered, and a
+// single current-status badge instead of the full pipeline walkthrough.
+function renderMyOrderCard(o, linkedOrder) {
+  const stepIdx = trackStepIndex(o, linkedOrder);
+  const statusHtml = o.status === "rejected"
+    ? `<span class="badge rejected">বাতিল হয়েছে</span>`
+    : `<span class="badge accepted">${TRACK_STEPS[stepIdx] ? TRACK_STEPS[stepIdx].label : TRACK_STEPS[0].label}</span>`;
+  const itemsHtml = (o.items || []).map(it => `<div class="mo-item-row">${escapeHtml(itemLabel(it))} <b>× ${formatQty(it.quantity)}</b></div>`).join("");
+  return `
+    <div class="paver mo-card">
+      <div class="mo-hdr">
+        <span class="mo-date">${formatDateTimeBN(toDate(o.createdAt))}</span>
+        ${statusHtml}
+      </div>
+      <div class="mo-track-row">
+        <span>ট্র্যাকিং নম্বরঃ</span>
+        <b class="mo-track-code">${escapeHtml(o.id)}</b>
+        <button type="button" class="mo-copy-btn" data-copy="${escapeHtml(o.id)}">কপি</button>
+      </div>
+      <div class="mo-items">${itemsHtml}</div>
+    </div>`;
 }
 function renderTrackResult(order, linkedOrder) {
   if (order.status === "rejected") {
