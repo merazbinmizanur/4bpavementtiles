@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<script>try{if(localStorage.getItem("4b_theme")==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>মালিক প্যানেল — 4B PAVEMENT TILES</title>
+<meta name="theme-color" content="#F3EEE4">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <div class="dash-bg"><div class="dash-lattice"></div><div class="dash-aurora dash-a1"></div><div class="dash-aurora dash-a2"></div><div class="dash-aurora dash-a3"></div></div>
+  <div class="splash-float sf1"></div><div class="splash-float sf2"></div><div class="splash-float sf3"></div><div class="splash-float sf4"></div>
+  <div class="splash-logo-wrap">
+    <span class="splash-ring-2"></span><span class="splash-ring-1"></span>
+    <div class="brand-mark" id="splashMarkHolder"></div>
+  </div>
+  <h1 class="splash-title">4B PAVEMENT TILES</h1>
+  <div class="splash-tagline" id="splashTagline"></div>
+  <div class="splash-bar"><span></span></div>
+</div>
+
+<div class="app" id="app" style="display:none;">
+  <div class="dash-bg"><div class="dash-lattice"></div><div class="dash-aurora dash-a1"></div><div class="dash-aurora dash-a2"></div><div class="dash-aurora dash-a3"></div></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark" id="brandMarkHolder"></div>
+      <div class="brand-text"><b>4B PAVEMENT TILES</b><span id="ownerNameLabel">মালিক প্যানেল</span></div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="theme-toggle-btn" id="themeToggleBtn" title="থিম বদলান" aria-label="থিম বদলান"></button>
+      <button class="icon-btn" id="notifBtn" title="নোটিফিকেশন" aria-label="নোটিফিকেশন">
+        <span id="notifIconHolder"></span>
+        <span class="notif-dot" id="notifBadge"></span>
+      </button>
+      <span class="role-chip">মালিক</span>
+      <button class="icon-btn" id="logoutBtn" title="লগআউট" aria-label="লগআউট"></button>
+    </div>
+  </div>
+
+  <main class="view" id="view"></main>
+
+  <footer class="dev-credit">
+    <div class="dc-card">
+      <span class="dc-mark"></span>
+      <span class="dc-label">Developed By</span>
+      <span class="dc-name">Meraz Bin Mizanur</span>
+      <span class="dc-phone">01736907380</span>
+    </div>
+  </footer>
+
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="nav-item" data-nav="dashboard"><span id="ic-dashboard"></span><span>ড্যাশবোর্ড</span></div>
+    <div class="nav-item" data-nav="sales"><span id="ic-sales"></span><span>বিক্রি</span></div>
+    <div class="nav-item" data-nav="stock"><span id="ic-stock"></span><span>স্টক</span></div>
+    <div class="nav-item" data-nav="customers"><span id="ic-customers"></span><span>খাতা</span></div>
+    <div class="nav-item" data-nav="more"><span id="ic-more"></span><span>আরও</span></div>
+  </nav>
+</div>
+
+<script type="module" src="js/owner.js"></script>
+</body>
+</html>
